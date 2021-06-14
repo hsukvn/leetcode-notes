@@ -5,7 +5,6 @@ There are a total of `numCourses` courses you have to take, labeled from `0` to 
 - For example, the pair `[0, 1]`, indicates that to take course `0` you have to first take course `1`.
 Return the ordering of courses you should take to finish all courses. If there are many valid answers, return any of them. If it is impossible to finish all courses, return an empty array.
 
-
 ```
 Example 1:
 
@@ -38,6 +37,7 @@ Constraints:
 * `0 <= ai, bi < numCourses`
 * `ai != bi`
 * All the pairs `[ai, bi]` are distinct.
+
 
 ### DFS
 
@@ -125,3 +125,70 @@ public:
 
 * Time Complexity: O(V+E)
 * Space Complexity: O(V+E)
+
+
+### Kahn's algorithm (node degree)
+
+* build the graph G(V,E)
+* build a map for each vertex by its degree (how many dependencies for this vertex)
+* put node with degree 0 into a queue
+* loop the queue
+  * remove top front of the queue and put into a list
+  * update the degree map
+  * push element into the queue with degree 0
+* return list
+  * if size of list is less than course number then return empty list (has cycle)
+
+```cpp
+class Solution {
+private:
+    map<int, vector<int>> node_edge;
+    map<int, int> degree;
+
+public:
+    vector<int> findOrder(int numCourses, vector<vector<int>>& prerequisites) {
+        for (int i = 0; i < numCourses; ++i) {
+            degree[i] = 0;
+        }
+
+        for (const auto & p : prerequisites) {
+            node_edge[p[1]].push_back(p[0]); // p[1] -> p[0]
+            degree[p[0]]++;
+        }
+
+        vector<int> res;
+        queue<int> q;
+
+        for (auto &p : degree) {
+            if (p.second == 0) {
+                q.push(p.first);
+            }
+        }
+
+        while (!q.empty()) {
+            res.push_back(q.front());
+            for (const auto &c : node_edge[q.front()]) {
+                degree[c]--;
+                if (degree[c] == 0) {
+                    q.push(c);
+                }
+            }
+            q.pop();
+        }
+
+        if (res.size() != numCourses) {
+            return vector<int>{};
+        }
+
+        return res;
+    }
+};
+```
+
+* Time Complexity: O(V+E)
+  * pop each vertex once
+  * for each vertex we loop its edges
+    * eventually visit all edges
+* Space Complexity: O(V+E)
+  * O(V) for degree map
+  * O(E) for edge map
